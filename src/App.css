@@ -426,6 +426,119 @@
   cursor: pointer;
 }
 
+.memory-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.delete-button {
+  width: 30px;
+  height: 30px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: #9b6570;
+  font-size: 21px;
+  cursor: pointer;
+}
+
+.delete-button:hover {
+  background: #fff0f2;
+  color: #c62842;
+}
+
+.dashboard-search {
+  width: 100%;
+  color: #7a8499;
+  text-align: left;
+  cursor: pointer;
+}
+
+.app-message,
+.form-error,
+.media-unavailable {
+  padding: 11px 14px;
+  border-radius: 10px;
+  font-size: 13px;
+}
+
+.error-message,
+.form-error {
+  background: #fff0f2;
+  color: #b4233c;
+}
+
+.result-count,
+.privacy-note {
+  color: #758096;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.danger-button {
+  border: 0;
+  border-radius: 10px;
+  padding: 12px 16px;
+  background: #c62842;
+  color: white;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+[data-theme='dark'] body,
+[data-theme='dark'] .app {
+  background: #101522;
+  color: #eef2ff;
+}
+
+[data-theme='dark'] .header,
+[data-theme='dark'] .sidebar,
+[data-theme='dark'] .panel,
+[data-theme='dark'] .summary-card,
+[data-theme='dark'] .search-section,
+[data-theme='dark'] .voice-recorder-modal {
+  background: #182033;
+  border-color: #30394d;
+}
+
+[data-theme='dark'] .nav-item,
+[data-theme='dark'] .page-description,
+[data-theme='dark'] .welcome-text,
+[data-theme='dark'] .memory-details p,
+[data-theme='dark'] .privacy-note {
+  color: #aeb7ca;
+}
+
+[data-theme='dark'] .nav-item:hover,
+[data-theme='dark'] .quick-actions button,
+[data-theme='dark'] .calendar-day,
+[data-theme='dark'] .memory-type {
+  background: #222b3e;
+  color: #e7ebf5;
+  border-color: #39445a;
+}
+
+[data-theme='dark'] .nav-item.active {
+  background: #35335d;
+  color: #a9a5ff;
+}
+
+[data-theme='dark'] input,
+[data-theme='dark'] textarea,
+[data-theme='dark'] select,
+[data-theme='dark'] .icon-button {
+  background: #222b3e;
+  color: #eef2ff;
+  border-color: #3b465b;
+}
+
 .quick-actions {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -486,9 +599,18 @@
     display: none;
   }
 
+  .app-body { flex-direction: column; }
+
   .sidebar {
-    display: none;
+    width: 100%;
+    padding: 10px;
+    overflow-x: auto;
+    border-right: 0;
+    border-bottom: 1px solid #e3e8f0;
   }
+
+  .sidebar-nav { flex-direction: row; min-width: max-content; }
+  .nav-item { width: auto; white-space: nowrap; }
 
   .main-content {
     padding: 22px 16px;
@@ -514,6 +636,8 @@
   .memory-time {
     padding: 0;
   }
+
+  .memory-actions { flex-direction: row; justify-content: flex-end; }
 }
 .calendar-layout {
   display: grid;

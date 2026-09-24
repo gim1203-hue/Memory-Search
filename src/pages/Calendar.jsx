@@ -4,6 +4,7 @@ import MemoryItem from '../components/MemoryItem';
 function Calendar({
   memories,
   toggleFavorite,
+  removeMemory,
 }) {
   const today = new Date();
 
@@ -295,6 +296,7 @@ function Calendar({
     category={memory.category}
     favorite={memory.favorite}
     toggleFavorite={toggleFavorite}
+    removeMemory={removeMemory}
     mediaType={memory.mediaType}
     mediaUrl={memory.mediaUrl}
   />

@@ -1,333 +1,123 @@
-import { useEffect, useState } from 'react';
-import { useLocation } from 'react-router-dom';
-
-import SummaryCard from '../components/SummaryCard';
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import MemoryItem from '../components/MemoryItem';
 import QuickActions from '../components/QuickActions';
+import SummaryCard from '../components/SummaryCard';
 
-function Dashboard({
-  memories,
-  toggleFavorite,
-  addMemory,
-}) {
-  const location = useLocation();
-
+function Dashboard({ memories, toggleFavorite, addMemory, removeMemory }) {
+  const navigate = useNavigate();
   const [showForm, setShowForm] = useState(false);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [category, setCategory] = useState('Personal');
-  const [type, setType] = useState('note');
+  const [formError, setFormError] = useState('');
 
-  useEffect(() => {
-    if (location.state?.openAddMemory) {
-      setShowForm(true);
-      setType(location.state.memoryType || 'note');
-    }
-  }, [location.state]);
-
-  const photoCount = memories.filter(
-    (memory) => memory.icon === '📸'
-  ).length;
-
-  const videoCount = memories.filter(
-    (memory) => memory.icon === '🎥'
-  ).length;
-
-  const voiceMemoCount = memories.filter(
-    (memory) => memory.icon === '🎙️'
-  ).length;
-
-  function getIcon() {
-    if (type === 'photo') return '📸';
-    if (type === 'video') return '🎥';
-    if (type === 'voice') return '🎙️';
-
-    return '📝';
-  }
-
-  function handleSubmit(event) {
+  async function handleSubmit(event) {
     event.preventDefault();
-
     if (!title.trim()) {
+      setFormError('Please enter a title.');
       return;
     }
 
     const now = new Date();
-
-    const dateKey = `${now.getFullYear()}-${String(
-      now.getMonth() + 1
-    ).padStart(2, '0')}-${String(
-      now.getDate()
-    ).padStart(2, '0')}`;
-
-    const newMemory = {
+    const saved = await addMemory({
       id: Date.now(),
-      date: dateKey,
-      time: now.toLocaleTimeString([], {
-        hour: 'numeric',
-        minute: '2-digit',
-      }),
-      icon: getIcon(),
+      date: `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(
+        now.getDate(),
+      ).padStart(2, '0')}`,
+      time: now.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }),
+      icon: '📝',
       title: title.trim(),
       description: description.trim(),
       category,
       favorite: false,
-    };
+    });
 
-    addMemory(newMemory);
-
-    setTitle('');
-    setDescription('');
-    setCategory('Personal');
-    setType('note');
-    setShowForm(false);
+    if (saved) {
+      setTitle('');
+      setDescription('');
+      setCategory('Personal');
+      setFormError('');
+      setShowForm(false);
+    }
   }
+
+  const counts = {
+    photo: memories.filter((memory) => memory.mediaType === 'photo').length,
+    video: memories.filter((memory) => memory.mediaType === 'video').length,
+    audio: memories.filter((memory) => memory.mediaType === 'audio').length,
+  };
 
   return (
     <>
       <section className="welcome-section">
         <div>
-          <p className="section-label">
-            PERSONAL LIFE DASHBOARD
-          </p>
-
+          <p className="section-label">PERSONAL LIFE DASHBOARD</p>
           <h2>Welcome to Memory Search</h2>
-
           <p className="welcome-text">
-            Keep your notes, photos, videos, voice memories, and important
-            moments organized by day.
+            Keep notes, photos, videos, voice memories, and important moments organized by day.
           </p>
         </div>
-
-        <button
-          className="primary-button"
-          type="button"
-          onClick={() => setShowForm(true)}
-        >
-          + Add Memory
+        <button className="primary-button" type="button" onClick={() => setShowForm(true)}>
+          + Add Note
         </button>
       </section>
 
       {showForm && (
         <section className="panel add-memory-panel">
           <div className="panel-heading">
-            <div>
-              <p className="section-label">
-                NEW MEMORY
-              </p>
-
-              <h3>Add Memory</h3>
-            </div>
-
-            <button
-              type="button"
-              className="text-button"
-              onClick={() => setShowForm(false)}
-            >
-              Close
-            </button>
+            <div><p className="section-label">NEW MEMORY</p><h3>Add a Note</h3></div>
+            <button type="button" className="text-button" onClick={() => setShowForm(false)}>Close</button>
           </div>
-
-          <form
-            className="memory-form"
-            onSubmit={handleSubmit}
-          >
+          <form className="memory-form" onSubmit={handleSubmit}>
             <div className="form-group">
-              <label htmlFor="memory-title">
-                Title
-              </label>
-
-              <input
-                id="memory-title"
-                type="text"
-                value={title}
-                onChange={(event) =>
-                  setTitle(event.target.value)
-                }
-                placeholder="What do you want to remember?"
-              />
+              <label htmlFor="memory-title">Title</label>
+              <input id="memory-title" value={title} maxLength="80" onChange={(event) => setTitle(event.target.value)} placeholder="What do you want to remember?" autoFocus />
             </div>
-
             <div className="form-group">
-              <label htmlFor="memory-description">
-                Description
-              </label>
-
-              <textarea
-                id="memory-description"
-                value={description}
-                onChange={(event) =>
-                  setDescription(event.target.value)
-                }
-                placeholder="Add more details..."
-                rows="4"
-              />
+              <label htmlFor="memory-description">Description</label>
+              <textarea id="memory-description" value={description} maxLength="500" onChange={(event) => setDescription(event.target.value)} placeholder="Add more details..." rows="4" />
             </div>
-
-            <div className="form-row">
-              <div className="form-group">
-                <label htmlFor="memory-type">
-                  Type
-                </label>
-
-                <select
-                  id="memory-type"
-                  value={type}
-                  onChange={(event) =>
-                    setType(event.target.value)
-                  }
-                >
-                  <option value="note">
-                    Note
-                  </option>
-
-                  <option value="photo">
-                    Photo
-                  </option>
-
-                  <option value="video">
-                    Video
-                  </option>
-
-                  <option value="voice">
-                    Voice Memo
-                  </option>
-                </select>
-              </div>
-
-              <div className="form-group">
-                <label htmlFor="memory-category">
-                  Category
-                </label>
-
-                <select
-                  id="memory-category"
-                  value={category}
-                  onChange={(event) =>
-                    setCategory(event.target.value)
-                  }
-                >
-                  <option value="Personal">
-                    Personal
-                  </option>
-
-                  <option value="Daily Life">
-                    Daily Life
-                  </option>
-
-                  <option value="Important">
-                    Important
-                  </option>
-
-                  <option value="Family">
-                    Family
-                  </option>
-
-                  <option value="Work">
-                    Work
-                  </option>
-
-                  <option value="Travel">
-                    Travel
-                  </option>
-                </select>
-              </div>
+            <div className="form-group">
+              <label htmlFor="memory-category">Category</label>
+              <select id="memory-category" value={category} onChange={(event) => setCategory(event.target.value)}>
+                {['Personal', 'Daily Life', 'Important', 'Family', 'Work', 'Travel'].map((item) => <option key={item}>{item}</option>)}
+              </select>
             </div>
-
+            {formError && <p className="form-error" role="alert">{formError}</p>}
             <div className="form-actions">
-              <button
-                type="button"
-                className="secondary-button"
-                onClick={() => setShowForm(false)}
-              >
-                Cancel
-              </button>
-
-              <button
-                type="submit"
-                className="primary-button"
-              >
-                Save Memory
-              </button>
+              <button type="button" className="secondary-button" onClick={() => setShowForm(false)}>Cancel</button>
+              <button type="submit" className="primary-button">Save Memory</button>
             </div>
           </form>
         </section>
       )}
 
-      <section className="search-section">
-        <span className="search-icon">🔎</span>
-
-        <input
-          type="text"
-          placeholder="Search memories, dates, notes, people..."
-        />
-      </section>
+      <button className="search-section dashboard-search" type="button" onClick={() => navigate('/search')}>
+        <span className="search-icon">🔎</span><span>Search memories, dates, notes, and categories...</span>
+      </button>
 
       <section className="summary-grid">
-        <SummaryCard
-          icon="📝"
-          label="Total Memories"
-          value={memories.length}
-        />
-
-        <SummaryCard
-          icon="📸"
-          label="Photos"
-          value={photoCount}
-        />
-
-        <SummaryCard
-          icon="🎥"
-          label="Videos"
-          value={videoCount}
-        />
-
-        <SummaryCard
-          icon="🎙️"
-          label="Voice Memos"
-          value={voiceMemoCount}
-        />
+        <SummaryCard icon="📝" label="Total Memories" value={memories.length} />
+        <SummaryCard icon="📷" label="Photos" value={counts.photo} />
+        <SummaryCard icon="🎥" label="Videos" value={counts.video} />
+        <SummaryCard icon="🎙️" label="Voice Memos" value={counts.audio} />
       </section>
 
       <section className="content-grid">
         <div className="panel">
-          <div className="panel-heading">
-            <div>
-              <p className="section-label">
-                TODAY
-              </p>
-
-              <h3>Today's Memories</h3>
+          <div className="panel-heading"><div><p className="section-label">RECENT</p><h3>Your Memories</h3></div></div>
+          {memories.length === 0 ? (
+            <div className="page-placeholder"><div className="placeholder-icon">🗂️</div><h3>No memories yet</h3><p>Add a note or use Quick Access to save media.</p></div>
+          ) : (
+            <div className="memory-list">
+              {memories.slice(0, 8).map((memory) => (
+                <MemoryItem key={memory.id} {...memory} toggleFavorite={toggleFavorite} removeMemory={removeMemory} />
+              ))}
             </div>
-
-            <button
-              className="text-button"
-              type="button"
-            >
-              View all
-            </button>
-          </div>
-
-          <div className="memory-list">
-            {memories.map((memory) => (
-              <MemoryItem
-                key={memory.id}
-                id={memory.id}
-                time={memory.time}
-                icon={memory.icon}
-                title={memory.title}
-                description={memory.description}
-                category={memory.category}
-                favorite={memory.favorite}
-                toggleFavorite={toggleFavorite}
-                mediaType={memory.mediaType}
-                mediaUrl={memory.mediaUrl}
-              />
-            ))}
-          </div>
+          )}
         </div>
-
-        <QuickActions addMemory={addMemory} />
+        <QuickActions addMemory={addMemory} openNoteForm={() => setShowForm(true)} />
       </section>
     </>
   );

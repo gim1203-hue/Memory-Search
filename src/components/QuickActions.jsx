@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-function QuickActions({ addMemory }) {
+function QuickActions({ addMemory, openNoteForm }) {
   const navigate = useNavigate();
 
   const photoInputRef = useRef(null);
@@ -29,7 +29,7 @@ function QuickActions({ addMemory }) {
     videoInputRef.current?.click();
   }
 
-  function handlePhotoSelected(event) {
+  async function handlePhotoSelected(event) {
     const file = event.target.files?.[0];
 
     if (!file) {
@@ -42,8 +42,6 @@ function QuickActions({ addMemory }) {
     }
 
     const now = new Date();
-    const photoUrl = URL.createObjectURL(file);
-
     const newPhotoMemory = {
       id: Date.now(),
       date: makeDateKey(now),
@@ -57,15 +55,14 @@ function QuickActions({ addMemory }) {
       category: 'Daily Life',
       favorite: false,
       mediaType: 'photo',
-      mediaUrl: photoUrl,
     };
 
-    addMemory(newPhotoMemory);
+    await addMemory(newPhotoMemory, file);
 
     event.target.value = '';
   }
 
-  function handleVideoSelected(event) {
+  async function handleVideoSelected(event) {
     const file = event.target.files?.[0];
 
     if (!file) {
@@ -78,8 +75,6 @@ function QuickActions({ addMemory }) {
     }
 
     const now = new Date();
-    const videoUrl = URL.createObjectURL(file);
-
     const newVideoMemory = {
       id: Date.now(),
       date: makeDateKey(now),
@@ -93,10 +88,9 @@ function QuickActions({ addMemory }) {
       category: 'Daily Life',
       favorite: false,
       mediaType: 'video',
-      mediaUrl: videoUrl,
     };
 
-    addMemory(newVideoMemory);
+    await addMemory(newVideoMemory, file);
 
     event.target.value = '';
   }
@@ -136,7 +130,7 @@ function QuickActions({ addMemory }) {
         }
       };
 
-      mediaRecorder.onstop = () => {
+      mediaRecorder.onstop = async () => {
         const audioBlob = new Blob(
           audioChunksRef.current,
           {
@@ -145,8 +139,6 @@ function QuickActions({ addMemory }) {
               'audio/webm',
           }
         );
-
-        const audioUrl = URL.createObjectURL(audioBlob);
 
         const now = new Date();
 
@@ -163,10 +155,9 @@ function QuickActions({ addMemory }) {
           category: 'Personal',
           favorite: false,
           mediaType: 'audio',
-          mediaUrl: audioUrl,
         };
 
-        addMemory(newVoiceMemory);
+        await addMemory(newVoiceMemory, audioBlob);
 
         microphoneStreamRef.current?.getTracks().forEach(
           (track) => track.stop()
@@ -231,14 +222,7 @@ function QuickActions({ addMemory }) {
 <div className="quick-actions">
   <button
   type="button"
-  onClick={() =>
-    navigate('/', {
-      state: {
-        openAddMemory: true,
-        memoryType: 'note',
-      },
-    })
-  }
+  onClick={openNoteForm}
 >
   <span>📝</span>
   New Note
