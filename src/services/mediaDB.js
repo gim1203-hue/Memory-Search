@@ -2,7 +2,7 @@ const DB_NAME = 'memory-search-db';
 const DB_VERSION = 1;
 const STORE_NAME = 'media';
 
-function openDatabase() {
+function openDB() {
   return new Promise((resolve, reject) => {
     const request = indexedDB.open(DB_NAME, DB_VERSION);
 
@@ -16,97 +16,81 @@ function openDatabase() {
       }
     };
 
-    request.onsuccess = () => {
-      resolve(request.result);
-    };
-
-    request.onerror = () => {
-      reject(request.error);
-    };
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
   });
 }
 
-export async function saveMedia(id, blob, mediaType) {
-  const db = await openDatabase();
+export async function saveMedia(userId, memoryId, blob, mediaType) {
+  const db = await openDB();
 
   return new Promise((resolve, reject) => {
-    const transaction = db.transaction(
-      STORE_NAME,
-      'readwrite'
-    );
-
+    const transaction = db.transaction(STORE_NAME, 'readwrite');
     const store = transaction.objectStore(STORE_NAME);
 
-    const request = store.put({
-      id,
+    store.put({
+      id: `${userId}-${memoryId}`,
+      userId,
+      memoryId,
       blob,
       mediaType,
     });
 
-    request.onsuccess = () => {
-      resolve(true);
-    };
-
-    request.onerror = () => {
-      reject(request.error);
-    };
+    transaction.oncomplete = () => resolve();
+    transaction.onerror = () => reject(transaction.error);
   });
 }
 
-export async function getMedia(id) {
-  const db = await openDatabase();
+export async function getMedia(userId, memoryId) {
+  const db = await openDB();
 
   return new Promise((resolve, reject) => {
-    const transaction = db.transaction(
-      STORE_NAME,
-      'readonly'
-    );
-
+    const transaction = db.transaction(STORE_NAME, 'readonly');
     const store = transaction.objectStore(STORE_NAME);
 
-    const request = store.get(id);
+    const request = store.get(`${userId}-${memoryId}`);
 
-    request.onsuccess = () => {
-      resolve(request.result || null);
-    };
-
-    request.onerror = () => {
-      reject(request.error);
-    };
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
   });
 }
 
-export async function deleteMedia(id) {
-  const db = await openDatabase();
-
-  return new Promise((resolve, reject) => {
-    const transaction = db.transaction(
-      STORE_NAME,
-      'readwrite'
-    );
-
-    const store = transaction.objectStore(STORE_NAME);
-
-    const request = store.delete(id);
-
-    request.onsuccess = () => {
-      resolve(true);
-    };
-
-    request.onerror = () => {
-      reject(request.error);
-    };
-  });
-}
-
-export async function clearMedia() {
-  const db = await openDatabase();
+export async function deleteMedia(userId, memoryId) {
+  const db = await openDB();
 
   return new Promise((resolve, reject) => {
     const transaction = db.transaction(STORE_NAME, 'readwrite');
-    const request = transaction.objectStore(STORE_NAME).clear();
+    const store = transaction.objectStore(STORE_NAME);
 
-    request.onsuccess = () => resolve(true);
-    request.onerror = () => reject(request.error);
+    store.delete(`${userId}-${memoryId}`);
+
+    transaction.oncomplete = () => resolve();
+    transaction.onerror = () => reject(transaction.error);
+  });
+}
+
+export async function clearMedia(userId) {
+  const db = await openDB();
+
+  return new Promise((resolve, reject) => {
+    const transaction = db.transaction(STORE_NAME, 'readwrite');
+    const store = transaction.objectStore(STORE_NAME);
+
+    const request = store.openCursor();
+
+    request.onsuccess = (event) => {
+      const cursor = event.target.result;
+
+      if (cursor) {
+        if (cursor.value.userId === userId) {
+          cursor.delete();
+        }
+
+        cursor.continue();
+      }
+    };
+
+    transaction.oncomplete = () => resolve();
+    transaction.onerror = () => reject(transaction.error);
   });
 }
